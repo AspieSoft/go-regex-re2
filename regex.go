@@ -40,7 +40,7 @@ func init() {
 	go func(){
 		// clear cache items older than 10 minutes if there are only 200MB of free memory
 		syncterval.New(10 * time.Second, func() {
-			if common.FormatMemoryUsage(memory.FreeMemory()) < 200 {
+			if mem := common.FormatMemoryUsage(memory.FreeMemory()); mem < 200 && mem != 0 {
 				cache.ClearEarly(10 * time.Minute)
 				regParamIndexCache.ClearEarly(30 * time.Minute)
 			}
