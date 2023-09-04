@@ -2,12 +2,11 @@
 
 [![donation link](https://img.shields.io/badge/buy%20me%20a%20coffee-paypal-blue)](https://paypal.me/shaynejrtaylor?country.x=US&locale.x=en_US)
 
-A High Performance PCRE Regex Package That Uses A Cache.
+A performance improvement to the builtin RE2 module.
 
-Simplifies the the go-pcre regex package.
-After calling a regex, the compiled output gets cached to improve performance.
+This method adds a cache, and some better functions, and uses RE2 for compatability.
 
-This package uses the [go-pcre](https://github.com/GRbit/go-pcre) package for better performance.
+If you need more speed, checkout my other PCRE based module [go-regex](https://github.com/AspieSoft/go-regex).
 
 ## Installation
 
