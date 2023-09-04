@@ -332,7 +332,6 @@ func (reg *Regexp) RepStr(str []byte, rep []byte) []byte {
 		}
 
 		res = append(res, r...)
-		
 	}
 
 	res = append(res, str[trim:]...)
