@@ -45,7 +45,7 @@ func init() {
 		syncterval.New(10 * time.Second, func() {
 			if mem := common.FormatMemoryUsage(memory.FreeMemory()); mem < 200 && mem != 0 {
 				cache.ClearEarly(10 * time.Minute)
-				compCache.ClearEarly(10 * time.Minute)
+				compCache.ClearEarly(5 * time.Minute)
 			}
 		})
 	}()
@@ -287,7 +287,7 @@ func (reg *Regexp) RepStrLit(str []byte, rep []byte) []byte {
 	return reg.RE.ReplaceAllLiteral(str, rep)
 }
 
-// RepStr is a more complex version of the RepStr method
+// RepStr is a more complex version of the RepStrLit method
 //
 // this function will replace things in the result like $1 with your capture groups
 //
@@ -404,6 +404,7 @@ func IsValidRE2(re string) bool {
 	}
 	return false
 }
+
 
 // JoinBytes is an easy way to join multiple values into a single []byte
 func JoinBytes(bytes ...interface{}) []byte {

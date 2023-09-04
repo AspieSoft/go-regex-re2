@@ -25,7 +25,7 @@ import (
   "github.com/AspieSoft/go-regex-re2/verbose"
 )
 
-// in this example, we will use verbose mode
+// this example will use verbose mode to make function names more clear
 
 // pre compile a regex into the cache
 // this method also returns the compiled pcre.Regexp struct
@@ -40,7 +40,7 @@ tree/v4.0.0
 regex.Compile(`re %1 and %2 ... %{12}`, `param 1`, `param 2` ..., `param 12`);
 
 // manually escape a string
-// note: compile params are automatically escaped
+// note: the compile methods params are automatically escaped
 regex.Escape(`(.*)? \$ \\$ \\\$ regex hack blocked`)
 
 // determine if a regex is valid, and can be compiled by this module
@@ -79,7 +79,7 @@ regex.Compile(`re|(keep this and split like in JavaScript)`).Split(myByteArray)
 // an alias of *regexp.Regexp
 regex.RE2
 
-// direct access to compiled *pcre.Regexp (or *regexp.Regexp if used)
+// direct access to compiled *regexp.Regexp
 regex.Compile("re").RE
 
 
