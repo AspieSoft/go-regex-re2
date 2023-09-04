@@ -29,7 +29,7 @@ func TestCompile(t *testing.T) {
 
 func TestReplaceStr(t *testing.T) {
 	var check = func(s string, re, r string, e string) {
-		res := Comp(re).RepStr([]byte(s), []byte(r))
+		res := Comp(re).RepStrLit([]byte(s), []byte(r))
 		if !bytes.Equal(res, []byte(e)) {
 			t.Error("[", string(res), "]\n", errors.New("result does not match expected result"))
 		}
@@ -41,7 +41,7 @@ func TestReplaceStr(t *testing.T) {
 
 func TestReplaceStrComplex(t *testing.T) {
 	var check = func(s string, re, r string, e string) {
-		res := Comp(re).RepStrComp([]byte(s), []byte(r))
+		res := Comp(re).RepStr([]byte(s), []byte(r))
 		if !bytes.Equal(res, []byte(e)) {
 			t.Error("[", string(res), "]\n", errors.New("result does not match expected result"))
 		}
@@ -84,7 +84,7 @@ func TestConcurrent(t *testing.T) {
 
 func TestCache(t *testing.T) {
 	var check = func(s string, re, r string, e string) {
-		res := Comp(re).RepStr([]byte(s), []byte(r))
+		res := Comp(re).RepStrLit([]byte(s), []byte(r))
 		if !bytes.Equal(res, []byte(e)) {
 			t.Error("[", string(res), "]\n", errors.New("result does not match expected result"))
 		}
@@ -96,7 +96,7 @@ func TestCache(t *testing.T) {
 
 func TestFlags(t *testing.T) {
 	var check = func(s string, re, r string, e string) {
-		res := Comp(re).RepStr([]byte(s), []byte(r))
+		res := Comp(re).RepStrLit([]byte(s), []byte(r))
 		if !bytes.Equal(res, []byte(e)) {
 			t.Error("[", string(res), "]\n", errors.New("result does not match expected result"))
 		}
@@ -118,7 +118,7 @@ func TestPerformance(t *testing.T) {
 
 func TestValid(t *testing.T) {
 	var check = func(re string, e bool) {
-		res := IsValid([]byte(re))
+		res := IsValid(re)
 		if res != e {
 			t.Error("[", string(re), "]\n", errors.New("result does not match expected result"))
 		}
