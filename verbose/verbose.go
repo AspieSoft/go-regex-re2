@@ -3,8 +3,8 @@ package regex
 import (
 	"regexp"
 
-	"github.com/AspieSoft/go-regex-re2.v2"
-	"github.com/AspieSoft/go-regex-re2.v2/common"
+	"github.com/AspieSoft/go-regex-re2/v2"
+	"github.com/AspieSoft/go-regex-re2/v2/common"
 )
 
 type RE2 *regexp.Regexp
