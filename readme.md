@@ -11,7 +11,7 @@ If you need more speed, checkout my other PCRE based module [go-regex](https://g
 ## Installation
 
 ```shell script
-  go get github.com/AspieSoft/go-regex-re2
+  go get github.com/AspieSoft/go-regex-re2/v2
 ```
 
 ## Usage
@@ -19,10 +19,10 @@ If you need more speed, checkout my other PCRE based module [go-regex](https://g
 ```go
 
 import (
-  "github.com/AspieSoft/go-regex-re2"
+  "github.com/AspieSoft/go-regex-re2/v2"
 
   // or for verbose function names
-  "github.com/AspieSoft/go-regex-re2/verbose"
+  "github.com/AspieSoft/go-regex-re2/v2/verbose"
 )
 
 // this example will use verbose mode to make function names more clear
