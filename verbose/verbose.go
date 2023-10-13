@@ -14,6 +14,7 @@ type RE2 *regexp.Regexp
 type Regexp struct {
 	RE *regexp.Regexp
 	reg *regex.Regexp
+	len int64
 }
 
 
@@ -22,7 +23,7 @@ type Regexp struct {
 // Comp compiles a regular expression and store it in the cache
 func Compile(re string, params ...string) *Regexp {
 	reg := regex.Comp(re, params...)
-	return &Regexp{RE: reg.RE, reg: reg}
+	return &Regexp{RE: reg.RE, reg: reg, len: int64(len(re))}
 }
 
 // CompTry tries to compile or returns an error
@@ -31,7 +32,7 @@ func CompileTry(re string, params ...string) (*Regexp, error) {
 	if err != nil {
 		return &Regexp{}, err
 	}
-	return &Regexp{RE: reg.RE}, nil
+	return &Regexp{RE: reg.RE, len: int64(len(re))}, nil
 }
 
 
@@ -100,14 +101,9 @@ func JoinBytes(bytes ...interface{}) []byte {
 //
 // @all: if true, will replace all text matching @re,
 // if false, will only replace the first occurrence
-func ReplaceFileString(name string, re string, rep []byte, all bool, maxReSize ...int64) error {
+func (reg *Regexp) ReplaceFileString(name string, rep []byte, all bool, maxReSize ...int64) error {
 	stat, err := os.Stat(name)
 	if err != nil || stat.IsDir() {
-		return err
-	}
-
-	reg, err := CompileTry(re)
-	if err != nil {
 		return err
 	}
 
@@ -119,7 +115,7 @@ func ReplaceFileString(name string, re string, rep []byte, all bool, maxReSize .
 
 	var found bool
 
-	l := int64(len(re) * 10)
+	l := int64(reg.len * 10)
 	if l < 1024 {
 		l = 1024
 	}
@@ -199,6 +195,14 @@ func ReplaceFileString(name string, re string, rep []byte, all bool, maxReSize .
 				file.WriteAt(bw, j)
 				file.Sync()
 			}
+
+			if !all {
+				file.Sync()
+				file.Close()
+				return nil
+			}
+
+			i += int64(len(repRes))
 		}
 
 		i++
@@ -286,14 +290,9 @@ func ReplaceFileString(name string, re string, rep []byte, all bool, maxReSize .
 //
 // @all: if true, will replace all text matching @re,
 // if false, will only replace the first occurrence
-func ReplaceFileFunc(name string, re string, rep func(data func(int) []byte) []byte, all bool, maxReSize ...int64) error {
+func (reg *Regexp) ReplaceFileFunc(name string, rep func(data func(int) []byte) []byte, all bool, maxReSize ...int64) error {
 	stat, err := os.Stat(name)
 	if err != nil || stat.IsDir() {
-		return err
-	}
-
-	reg, err := CompileTry(re)
-	if err != nil {
 		return err
 	}
 
@@ -305,7 +304,7 @@ func ReplaceFileFunc(name string, re string, rep func(data func(int) []byte) []b
 
 	var found bool
 
-	l := int64(len(re) * 10)
+	l := int64(reg.len * 10)
 	if l < 1024 {
 		l = 1024
 	}
@@ -385,6 +384,14 @@ func ReplaceFileFunc(name string, re string, rep func(data func(int) []byte) []b
 				file.WriteAt(bw, j)
 				file.Sync()
 			}
+
+			if !all {
+				file.Sync()
+				file.Close()
+				return nil
+			}
+
+			i += int64(len(repRes))
 		}
 
 		i++
