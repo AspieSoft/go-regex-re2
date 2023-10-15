@@ -10,9 +10,6 @@ import (
 	"time"
 
 	"github.com/AspieSoft/go-regex-re2/v2/common"
-	"github.com/AspieSoft/go-syncterval"
-	"github.com/AspieSoft/go-ttlcache"
-	"github.com/pbnjay/memory"
 )
 
 type RE2 *regexp.Regexp
@@ -36,27 +33,63 @@ var regCompBGRef *regexp.Regexp = regexp.MustCompile(`%!([0-9]+|o|c)!%`)
 var regComplexSel *Regexp
 var regEscape *Regexp
 
-var cache *ttlcache.Cache[string, *Regexp] = ttlcache.New[string, *Regexp](2 * time.Hour, 1 * time.Hour)
-var compCache *ttlcache.Cache[string, []byte] = ttlcache.New[string, []byte](2 * time.Hour, 1 * time.Hour)
+var cache common.CacheMap[*Regexp] = common.NewCache[*Regexp]()
+var compCache common.CacheMap[[]byte] = common.NewCache[[]byte]()
 
 func init() {
 	regComplexSel = Comp(`(\\|)\$([0-9]|\{[0-9]+\})`)
 	regEscape = Comp(`[\\\^\$\.\|\?\*\+\(\)\[\]\{\}\%]`)
 
 	go func(){
-		// clear cache items older than 10 minutes if there are only 200MB of free memory
-		syncterval.New(10 * time.Second, func() {
-			if mem := common.FormatMemoryUsage(memory.FreeMemory()); mem < 200 && mem != 0 {
-				cache.ClearEarly(10 * time.Minute)
-				compCache.ClearEarly(5 * time.Minute)
+		for {
+			time.Sleep(10 * time.Minute)
+
+			// default: remove cache items have not been accessed in over 2 hours
+			cacheTime := 2 * time.Hour
+
+			// SysFreeMemory returns the total free system memory in megabytes
+			mb := common.SysFreeMemory()
+			if mb < 200 && mb != 0 {
+				// low memory: remove cache items have not been accessed in over 10 minutes
+				cacheTime = 10 * time.Minute
+			}else if mb < 500 && mb != 0 {
+				// low memory: remove cache items have not been accessed in over 30 minutes
+				cacheTime = 30 * time.Minute
+			}else if mb < 2000 && mb != 0 {
+				// low memory: remove cache items have not been accessed in over 1 hour
+				cacheTime = 1 * time.Hour
+			}else if mb > 64000 {
+				// high memory: remove cache items have not been accessed in over 12 hour
+				cacheTime = 12 * time.Hour
+			}else if mb > 32000 {
+				// high memory: remove cache items have not been accessed in over 6 hour
+				cacheTime = 6 * time.Hour
+			}else if mb > 16000 {
+				// high memory: remove cache items have not been accessed in over 3 hour
+				cacheTime = 3 * time.Hour
 			}
-		})
+
+			cache.DelOld(cacheTime)
+			compCache.DelOld(cacheTime)
+
+			time.Sleep(10 * time.Second)
+
+			// clear cache if were still critically low on available memory
+			if mb := common.SysFreeMemory(); mb < 10 && mb != 0 {
+				cache.DelOld(0)
+				compCache.DelOld(0)
+			}
+		}
 	}()
 }
 
 // this method compiles the RE string to add more functionality to it
 func compRE(re string, params []string) string {
-	if val, ok := compCache.Get(re); ok {
+	if val, err := compCache.Get(re); val != nil || err != nil {
+		if err != nil {
+			return ""
+		}
+
 		return string(regCompParam.ReplaceAllFunc(val, func(b []byte) []byte {
 			if b[1] == '{' && b[len(b)-1] == '}' {
 				b = b[2:len(b)-1]
@@ -160,7 +193,7 @@ func compRE(re string, params []string) string {
 		return []byte{}
 	})
 
-	compCache.Set(re, reB)
+	compCache.Set(re, reB, nil)
 
 	return string(regCompParam.ReplaceAllFunc(reB, func(b []byte) []byte {
 		if b[1] == '{' && b[len(b)-1] == '}' {
@@ -183,33 +216,42 @@ func compRE(re string, params []string) string {
 func Comp(re string, params ...string) *Regexp {
 	re = compRE(re, params)
 
-	if val, ok := cache.Get(re); ok {
-		return val
-	} else {
-		reg := regexp.MustCompile(re)
-		compRe := Regexp{RE: reg, len: int64(len(re))}
+	if val, err := cache.Get(re); val != nil || err != nil {
+		if err != nil {
+			panic(err)
+		}
 
-		cache.Set(re, &compRe)
-		return &compRe
+		return val
 	}
+
+	reg := regexp.MustCompile(re)
+	compRe := Regexp{RE: reg, len: int64(len(re))}
+
+	cache.Set(re, &compRe, nil)
+	return &compRe
 }
 
 // CompTry tries to compile or returns an error
 func CompTry(re string, params ...string) (*Regexp, error) {
 	re = compRE(re, params)
 
-	if val, ok := cache.Get(re); ok {
-		return val, nil
-	} else {
-		reg, err := regexp.Compile(re)
+	if val, err := cache.Get(re); val != nil || err != nil {
 		if err != nil {
 			return &Regexp{}, err
 		}
-		compRe := Regexp{RE: reg, len: int64(len(re))}
 
-		cache.Set(re, &compRe)
-		return &compRe, nil
+		return val, nil
 	}
+
+	reg, err := regexp.Compile(re)
+	if err != nil {
+		cache.Set(re, nil, err)
+		return &Regexp{}, err
+	}
+	compRe := Regexp{RE: reg, len: int64(len(re))}
+
+	cache.Set(re, &compRe, nil)
+	return &compRe, nil
 }
 
 
